@@ -1,4 +1,9 @@
 <resources>
+
     <string name="app_name">FourSquareLib</string>
     <string name="login_url">"https://foursquare.com/oauth2/authenticate?client_id=%1$s&amp;response_type=token&amp;redirect_uri=%2$s"</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="menu_settings">Settings</string>
+    <string name="title_activity_abstract_four_square">a</string>
+
 </resources>

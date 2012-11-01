@@ -1,4 +1,4 @@
-package es.viridian.beersandroid.foursquare.exceptions;
+package es.viridian.foursquare.exceptions;
 
 public class FSException extends Exception {
 	private static final long serialVersionUID = 1L;

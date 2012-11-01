@@ -1,4 +1,4 @@
-package es.viridian.beersandroid.foursquare.exceptions;
+package es.viridian.foursquare.exceptions;
 
 public class FSDataException extends FSException {
 	public FSDataException(String message) {

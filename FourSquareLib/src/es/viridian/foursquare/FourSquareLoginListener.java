@@ -1,6 +1,6 @@
-package es.viridian.beersandroid.foursquare;
+package es.viridian.foursquare;
 
-import es.viridian.beersandroid.foursquare.enums.FourSquareError;
+import es.viridian.foursquare.enums.FourSquareError;
 
 public interface FourSquareLoginListener {
 	public void onSuccess(final String authToken);

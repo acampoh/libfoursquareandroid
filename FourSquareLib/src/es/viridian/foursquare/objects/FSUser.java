@@ -1,30 +1,29 @@
-package es.viridian.beersandroid.foursquare.objects;
+package es.viridian.foursquare.objects;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import es.viridian.beersandroid.foursquare.exceptions.FSDataException;
-
 import android.util.Log;
+import es.viridian.foursquare.exceptions.FSDataException;
 
 public class FSUser {
-	private String id;
-	private String firstName;
-	private String lastName;
-	private String photoUrl;
+	private String mId;
+	private String mFirstName;
+	private String mLastName;
+	private String mPhotoUrl;
 
-	private JSONObject jsonData;
+	private JSONObject mJsonData;
 
 	public void fillUser(final JSONObject response) throws FSDataException {
 		if (response != null) {
 			try {
-				jsonData = response.getJSONObject("user");
+				mJsonData = response.getJSONObject("user");
 
-				id = jsonData.getString("id");
-				firstName = jsonData.getString("firstName");
-				lastName = jsonData.getString("lastName");
-				JSONObject photoInfo = jsonData.getJSONObject("photo");
-				photoUrl = photoInfo.getString("prefix")
+				mId = mJsonData.getString("id");
+				mFirstName = mJsonData.getString("firstName");
+				mLastName = mJsonData.getString("lastName");
+				JSONObject photoInfo = mJsonData.getJSONObject("photo");
+				mPhotoUrl = photoInfo.getString("prefix")
 						+ photoInfo.getString("suffix").substring(1);
 			} catch (JSONException ex) {
 				Log.e("FSUSER",
@@ -36,22 +35,22 @@ public class FSUser {
 	}
 	
 	public final String getUserId() {
-		return id;
+		return mId;
 	}
 
 	public final String getFirstName() {
-		return firstName;
+		return mFirstName;
 	}
 
 	public final String getLastName() {
-		return lastName;
+		return mLastName;
 	}
 	
 	public final String getFullName() {
-		return firstName + " " + lastName;
+		return mFirstName + " " + mLastName;
 	}
 
 	public final String getPhotoUrl() {
-		return photoUrl;
+		return mPhotoUrl;
 	}
 }

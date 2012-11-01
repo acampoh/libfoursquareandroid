@@ -1,4 +1,4 @@
-package es.viridian.beersandroid.foursquare.exceptions;
+package es.viridian.foursquare.exceptions;
 
 public class FSRuntimeException extends RuntimeException {
 	public FSRuntimeException(String message)	{

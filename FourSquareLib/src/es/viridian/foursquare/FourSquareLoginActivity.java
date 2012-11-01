@@ -1,4 +1,4 @@
-package es.viridian.beersandroid.foursquare;
+package es.viridian.foursquare;
 
 import es.viridian.foursquarelib.R;
 import android.app.Activity;
@@ -9,11 +9,15 @@ import android.util.Log;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
-
-public class FourSquareActivity extends Activity {
+/**
+ * Activity that manages the fourSquare login. It returns the FourSquare auth token as the activity result.
+ * @author Adrian
+ *
+ */
+public class FourSquareLoginActivity extends Activity {
 	private static final int RESULT_ERROR = RESULT_FIRST_USER+1;
 	
-	private String loginUrl;
+	private String mLoginUrl;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -27,7 +31,7 @@ public class FourSquareActivity extends Activity {
 		String clientId = getIntent().getStringExtra("clientId");
 		String callbackUrl = getIntent().getStringExtra("callbackUrl");
 
-		loginUrl = getString(R.string.login_url, clientId, callbackUrl);
+		mLoginUrl = getString(R.string.login_url, clientId, callbackUrl);
 
 		// If authentication works, we'll get redirected to a url with a pattern
 		// like:
@@ -57,7 +61,6 @@ public class FourSquareActivity extends Activity {
 				}
 			}
 			
-			
 			@Override
 			public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
 				Intent i = new Intent();
@@ -72,6 +75,6 @@ public class FourSquareActivity extends Activity {
 				
 			}
 		});
-		webview.loadUrl(loginUrl);
+		webview.loadUrl(mLoginUrl);
 	}
 }
