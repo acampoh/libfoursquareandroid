@@ -48,7 +48,6 @@ public class FourSquareMgr {
 
 	private Context mCtx;
 	private FourSquareLoginListener mListener;
-	private FSWorker mWorker;
 
 	protected boolean mIsOk;
 	private static FourSquareMgr mInstance;
@@ -65,6 +64,7 @@ public class FourSquareMgr {
 	private FourSquareMgr() {
 		mIsOk = false;
 		mCurrentUser = null;
+		
 	}
 
 	public boolean init(Context ctx, String clientId, String callback) {
@@ -73,7 +73,6 @@ public class FourSquareMgr {
 
 		this.mCallbackUrl = callback;
 		this.mClientId = clientId;
-		this.mWorker = new FSWorker();
 
 		SharedPreferences prefs = ctx.getSharedPreferences("fourSquare",
 				Context.MODE_PRIVATE);
@@ -114,6 +113,17 @@ public class FourSquareMgr {
 			listener.onSuccess(mAuthToken);
 		}
 	}
+	
+	public void doLogout() {
+		mAuthToken = null;
+		
+		Editor prefs = mCtx.getSharedPreferences("fourSquare",
+				Context.MODE_PRIVATE).edit();
+
+		prefs.remove(AUTH_TOKEN_PREFS_KEY);
+
+		prefs.commit();
+	}
 
 	private JSONObject getJsonFromStream(InputStream stream)
 			throws IOException, JSONException {
@@ -138,9 +148,9 @@ public class FourSquareMgr {
 	public FSUser getCurrentUser() throws FSDataException {
 		if (mCurrentUser == null) {
 			JSONObject userResponse = retrieveFSData(FOURSQUARE_URL + "users/self?oauth_token="
-					+ mAuthToken + "&v=" + FOURSQUARE_API_VERSION);
+					+ mAuthToken + "&" + FOURSQUARE_API_VERSION);
 			mCurrentUser = new FSUser();
-			mCurrentUser.fillUser(userResponse);
+			mCurrentUser.fillFromJson(userResponse);
 		}
 
 		return mCurrentUser;
@@ -152,7 +162,7 @@ public class FourSquareMgr {
 
 		JSONObject response = postFSData(FOURSQUARE_URL + "checkins/add", params, true);
 		FSVenue venue = new FSVenue();
-		venue.fillVenue(response);
+		venue.fillFromJson(response);
 
 		return venue;
 	}
@@ -173,7 +183,7 @@ public class FourSquareMgr {
 			if (jsonVenues.optJSONObject(i) != null) {
 				FSVenue venue = new FSVenue();
 				try {
-					venue.fillVenue(jsonVenues.getJSONObject(i));
+					venue.fillFromJson(jsonVenues.getJSONObject(i));
 				} catch (JSONException e) {
 					throw new FSDataException(
 							"There was a problem parsing the response from FourSquare! method: searchVenues", e);
@@ -262,11 +272,12 @@ public class FourSquareMgr {
 	}
 	
 	private JSONObject fetchURL(HttpUriRequest request) throws FSDataException {
-		mWorker.execute(request);
+		FSWorker worker = new FSWorker();
+		worker.execute(request);
 		JSONObject result = null;
 
 		try {
-			result = mWorker.get();
+			result = worker.get();
 		} catch (InterruptedException e) {// DO nothing
 		} catch (ExecutionException e) {
 			throw new FSDataException(

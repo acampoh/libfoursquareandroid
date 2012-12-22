@@ -6,7 +6,7 @@ import org.json.JSONObject;
 import android.util.Log;
 import es.viridian.foursquare.exceptions.FSDataException;
 
-public class FSUser {
+public class FSUser extends FSAbstractClass {
 	private String mId;
 	private String mFirstName;
 	private String mLastName;
@@ -14,7 +14,8 @@ public class FSUser {
 
 	private JSONObject mJsonData;
 
-	public void fillUser(final JSONObject response) throws FSDataException {
+	@Override
+	public void fillFromJson(final JSONObject response) throws FSDataException {
 		if (response != null) {
 			try {
 				mJsonData = response.getJSONObject("user");
