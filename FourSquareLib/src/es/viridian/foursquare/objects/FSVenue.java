@@ -1,6 +1,6 @@
 package es.viridian.foursquare.objects;
 
-import org.json.JSONArray;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -13,7 +13,8 @@ public class FSVenue extends FSAbstractClass {
 	
 	private String mVenueId;
 	private String mName;
-	private Location mLocation;
+	private double mLatitude;
+	private double mlongitude;
 	private FSVenueCategory mCategory;
 	
 	@Override
@@ -33,11 +34,8 @@ public class FSVenue extends FSAbstractClass {
 		
 		if (location != null)
 		{
-			Location l = new Location("FourSquare");
-			l.setLatitude(location.optDouble("lat"));
-			l.setLongitude(location.optDouble("lng"));
-			
-			mLocation = l;
+			mLatitude = location.optDouble("lat");
+			mlongitude = location.optDouble("lng");
 		}
 		
 //		JSONArray categories = mJsonData.optJSONArray("categories");
@@ -53,38 +51,35 @@ public class FSVenue extends FSAbstractClass {
 //		}
 	}
 
-	public JSONObject getmJsonData() {
+	public JSONObject getJsonData() {
 		return mJsonData;
 	}
 
-	public void setmJsonData(JSONObject mJsonData) {
+	public void setJsonData(JSONObject mJsonData) {
 		this.mJsonData = mJsonData;
 	}
 
-	public String getmVenueId() {
+	public String getVenueId() {
 		return mVenueId;
 	}
 
-	public void setmVenueId(String mVenueId) {
+	public void setVenueId(String mVenueId) {
 		this.mVenueId = mVenueId;
 	}
 
-	public String getmName() {
+	public String getName() {
 		return mName;
 	}
 
-	public void setmName(String mName) {
+	public void setName(String mName) {
 		this.mName = mName;
 	}
-
-	public Location getmLocation() {
-		return mLocation;
+	
+	public double getLatitude() {
+		return mLatitude;
 	}
 
-	public void setmLocation(Location mLocation) {
-		this.mLocation = mLocation;
+	public double getlongitude() {
+		return mlongitude;
 	}
-	
-	
-	
 }

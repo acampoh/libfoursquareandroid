@@ -25,13 +25,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
-import android.location.Location;
 import android.util.Log;
 import es.viridian.foursquare.exceptions.FSConnectionException;
 import es.viridian.foursquare.exceptions.FSDataException;
+import es.viridian.foursquare.exceptions.FSException;
 import es.viridian.foursquare.exceptions.FSRuntimeException;
 import es.viridian.foursquare.objects.FSUser;
 import es.viridian.foursquare.objects.FSVenue;
+import es.viridian.foursquare.request.SearchVenuesRequest;
 
 public class FourSquareMgr {
 	private static final String FOURSQUARE_LOG_TAG = "FOUR_SQUARE";
@@ -121,7 +122,6 @@ public class FourSquareMgr {
 				Context.MODE_PRIVATE).edit();
 
 		prefs.remove(AUTH_TOKEN_PREFS_KEY);
-
 		prefs.commit();
 	}
 
@@ -145,58 +145,100 @@ public class FourSquareMgr {
 		return obj;
 	}
 
-	public FSUser getCurrentUser() throws FSDataException {
+	public void getCurrentUser(final FSResponseCallback<FSUser> callback) throws FSDataException {
 		if (mCurrentUser == null) {
-			JSONObject userResponse = retrieveFSData(FOURSQUARE_URL + "users/self?oauth_token="
-					+ mAuthToken + "&" + FOURSQUARE_API_VERSION);
-			mCurrentUser = new FSUser();
-			mCurrentUser.fillFromJson(userResponse);
+			retrieveFSData(FOURSQUARE_URL + "users/self?oauth_token="
+					+ mAuthToken + "&" + FOURSQUARE_API_VERSION, new FSRequestCallback() {
+						
+						@Override
+						public void setAsyncResult(JSONObject clazz) {
+							mCurrentUser = new FSUser();
+							boolean isOk = true;
+							try {
+								mCurrentUser.fillFromJson(clazz);
+							} catch (FSDataException e) {
+								// TODO Auto-generated catch block
+								callback.onError(e);
+								isOk = false;
+							}
+							if (isOk)
+								callback.onSuccess(mCurrentUser);
+						}
+					});
+			
 		}
-
-		return mCurrentUser;
 	}
 
-	public FSVenue checkIn(String venueId) throws FSDataException {
+	public void checkIn(String venueId, final FSResponseCallback<FSVenue> callback) throws FSDataException {
 		List<NameValuePair> params = new ArrayList<NameValuePair>();
 		params.add(new BasicNameValuePair("venueId", venueId));
 
-		JSONObject response = postFSData(FOURSQUARE_URL + "checkins/add", params, true);
-		FSVenue venue = new FSVenue();
-		venue.fillFromJson(response);
-
-		return venue;
-	}
-	
-	public List<FSVenue> searchVenues(Location location, int limit) throws FSDataException {
-		JSONObject result = retrieveFSData(FOURSQUARE_URL + "venues/search?ll="+ location.getLatitude()+"," + location.getLongitude() + "&limit=" + limit + getUrlAuthParams());
-		
-		ArrayList<FSVenue> venues = new ArrayList<FSVenue>();
-		JSONArray jsonVenues = null;
-		
-		try {
-			jsonVenues = result.getJSONArray("venues");
-		} catch (JSONException e) {
-			throw new FSDataException("There was a problem parsing the response from FourSquare! method: searchVenues", e);
-		}
-		
-		for (int i = 0; i < jsonVenues.length(); i++) {
-			if (jsonVenues.optJSONObject(i) != null) {
-				FSVenue venue = new FSVenue();
-				try {
-					venue.fillFromJson(jsonVenues.getJSONObject(i));
-				} catch (JSONException e) {
-					throw new FSDataException(
-							"There was a problem parsing the response from FourSquare! method: searchVenues", e);
-				}
+		postFSData(FOURSQUARE_URL + "checkins/add", params, true, new FSRequestCallback() {
 			
-				venues.add(venue);
+			@Override
+			public void setAsyncResult(JSONObject response) {
+				FSVenue venue = new FSVenue();
+				boolean isOk = true;
+				
+				try {
+					venue.fillFromJson(response);
+				} catch (FSDataException ex) {
+					callback.onError(ex);
+					
+					isOk = false;
+				}
+				
+				if (isOk)
+					callback.onSuccess(venue);
+				
 			}
-		}
-		
-		return venues;
+		});
 	}
 	
-	private String getUrlAuthParams()
+	public void searchVenues(SearchVenuesRequest request,final FSResponseCallback<List<FSVenue>>  callback) throws FSDataException {
+		retrieveFSData(request.getUrl(), new FSRequestCallback() {
+			
+			@Override
+			public void setAsyncResult(JSONObject result) {
+				ArrayList<FSVenue> venues = new ArrayList<FSVenue>();
+				JSONArray jsonVenues = null;
+				boolean isOk = true;
+				
+				try {
+					jsonVenues = result.getJSONArray("venues");
+				} catch (JSONException e) {
+					isOk = false;
+					callback.onError(new FSDataException("There was a problem parsing the response from FourSquare! method: searchVenues", e));
+				}
+				
+				for (int i = 0; i < jsonVenues.length(); i++) {
+					if (jsonVenues.optJSONObject(i) != null) {
+						FSVenue venue = new FSVenue();
+						try {
+							venue.fillFromJson(jsonVenues.getJSONObject(i));
+						} catch (JSONException e) {
+							isOk = false;
+							FSException ex = new FSDataException(
+									"There was a problem parsing the response from FourSquare! method: searchVenues", e);
+							
+							callback.onError(ex);
+						} catch (FSDataException ex) {
+							isOk = false;
+							callback.onError(ex);
+						}
+					
+						venues.add(venue);
+					}
+				}
+				
+				if (isOk)
+					callback.onSuccess(venues);
+
+			}
+		});		
+	}
+	
+	public String getUrlAuthParams()
 	{
 		return "&oauth_token=" + mAuthToken + "&"+ FOURSQUARE_API_VERSION;
 	}
@@ -247,7 +289,7 @@ public class FourSquareMgr {
 		return httpCode == HTTP_OK_CODE;
 	}
 
-	private JSONObject postFSData(String url, List<NameValuePair> params, boolean needsAuth)
+	private void postFSData(String url, List<NameValuePair> params, boolean needsAuth, FSRequestCallback callback)
 			throws FSDataException {
 
 		if (needsAuth)
@@ -264,27 +306,16 @@ public class FourSquareMgr {
 					"There was a problem parsing request params", ex);
 		}
 
-		return fetchURL(request);
+		fetchURL(request, callback);
 	}
 
-	private JSONObject retrieveFSData(String url) throws FSDataException {
-		return fetchURL(new HttpGet(url));
+	private void retrieveFSData(String url, FSRequestCallback callback) throws FSDataException {
+		fetchURL(new HttpGet(url), callback);
 	}
 	
-	private JSONObject fetchURL(HttpUriRequest request) throws FSDataException {
-		FSWorker worker = new FSWorker();
+	private void fetchURL(HttpUriRequest request, FSRequestCallback callback) throws FSDataException {
+		FSWorker worker = new FSWorker(callback);
 		worker.execute(request);
-		JSONObject result = null;
-
-		try {
-			result = worker.get();
-		} catch (InterruptedException e) {// DO nothing
-		} catch (ExecutionException e) {
-			throw new FSDataException(
-					"There was some problems in async task", e);
-		}
-
-		return result;
 	}
 	
 

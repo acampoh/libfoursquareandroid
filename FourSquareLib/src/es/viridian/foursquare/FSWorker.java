@@ -16,6 +16,12 @@ import es.viridian.foursquare.exceptions.FSRuntimeException;
 
 public class FSWorker extends AsyncTask<HttpUriRequest, Integer, JSONObject> {
 	private static final String FOURSQUARE_LOG_TAG = "FOUR_SQUARE";
+	
+	private FSRequestCallback mCallback;
+
+	public FSWorker(FSRequestCallback callback) {
+		mCallback = callback;
+	}
 
 	@Override
 	protected JSONObject doInBackground(HttpUriRequest... params) {
@@ -40,5 +46,10 @@ public class FSWorker extends AsyncTask<HttpUriRequest, Integer, JSONObject> {
 		}
 		
 		return null;
+	}
+	
+	@Override
+	protected void onPostExecute(JSONObject result) {
+		mCallback.setAsyncResult(result);
 	}
 }
